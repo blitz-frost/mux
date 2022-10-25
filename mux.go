@@ -48,6 +48,11 @@ func (x Path) Release() {
 	delete(paths, x)
 }
 
+type Guarder interface {
+	Guard(Path)
+	Unguard(Path)
+}
+
 var (
 	paths = make(map[Path]struct{})
 	seek  Path // last allocated Path
