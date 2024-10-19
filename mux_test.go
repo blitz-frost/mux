@@ -17,7 +17,7 @@ func BenchmarkS(b *testing.B) {
 
 func BenchmarkGuard(b *testing.B) {
 	mux := Guard{}
-	p := Path(1)
+	p := new(Path)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mux.Guard(p)
@@ -45,7 +45,7 @@ func BenchmarkRWRead(b *testing.B) {
 
 func BenchmarkRWGuardWrite(b *testing.B) {
 	mux := MakeRWGuard()
-	p := Path(1)
+	p := new(Path)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mux.Guard(p)
@@ -55,7 +55,7 @@ func BenchmarkRWGuardWrite(b *testing.B) {
 
 func BenchmarkRWGuardRead(b *testing.B) {
 	mux := MakeRWGuard()
-	p := Path(1)
+	p := new(Path)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mux.RGuard(p)
@@ -305,7 +305,7 @@ func TestGuard(t *testing.T) {
 			for i = range seq {
 				seq[i].fn(p)
 			}
-		}(Path(i+1), seq) // 0 is an invalid Path
+		}(new(Path), seq)
 	}
 	wg.Wait()
 
