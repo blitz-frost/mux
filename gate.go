@@ -148,6 +148,8 @@ func (x *Gate) Unlock() {
 			x.thread = nil
 			x.count = 0
 		}
+	} else {
+		x.count--
 	}
 	x.mux.Unlock()
 }
