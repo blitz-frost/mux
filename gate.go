@@ -1,10 +1,10 @@
 package mux
 
-import "errors"
+import "github.com/blitz-frost/errors"
 
 var (
-	ErrCanceled = errors.New("canceled")
-	ErrConflict = errors.New("deadlock conflict")
+	ErrCanceled = errors.Simple("canceled")
+	ErrConflict = errors.Simple("deadlock conflict")
 )
 
 type Thread struct {
@@ -161,6 +161,7 @@ func (x *Gate) threadGet() *Thread {
 	return o
 }
 
+// TODO delete or turn into a comment
 func example() error {
 	g := GateMake()
 	t := ThreadMake(nil)
@@ -175,13 +176,13 @@ try:
 			if decision {
 				// cancel other thread and try locking again
 
-				conflict.Cancel(errors.New("some reason"))
+				conflict.Cancel(errors.Simple("some reason"))
 				goto try
 			} else {
 				// yield to the other thread
 
 				conflict.Resolve()
-				return errors.New("abort")
+				return errors.Simple("abort")
 			}
 
 		} else {
