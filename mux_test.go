@@ -17,7 +17,7 @@ func BenchmarkS(b *testing.B) {
 
 func BenchmarkGuard(b *testing.B) {
 	mux := Guard{}
-	p := new(Path)
+	p := Path(1)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mux.Guard(p)
@@ -44,8 +44,8 @@ func BenchmarkRWRead(b *testing.B) {
 }
 
 func BenchmarkRWGuardWrite(b *testing.B) {
-	mux := MakeRWGuard()
-	p := new(Path)
+	mux := RWGuardMake()
+	p := Path(1)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mux.Guard(p)
@@ -54,8 +54,8 @@ func BenchmarkRWGuardWrite(b *testing.B) {
 }
 
 func BenchmarkRWGuardRead(b *testing.B) {
-	mux := MakeRWGuard()
-	p := new(Path)
+	mux := RWGuardMake()
+	p := Path(1)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		mux.RGuard(p)
@@ -126,7 +126,7 @@ func (x *testResult) add(r testRecord) {
 }
 
 func TestGuard(t *testing.T) {
-	guard := MakeRWGuard() // test target
+	guard := RWGuardMake() // test target
 	res := testResult{}
 
 	type eventCollection struct {
@@ -266,10 +266,13 @@ func TestGuard(t *testing.T) {
 		paths[i] = seq
 	}
 
+	var path Path
+
 	// execute all paths concurrently
 	wg := sync.WaitGroup{}
-	for i, seq := range paths {
+	for _, seq := range paths {
 		wg.Add(1)
+		path++
 		go func(p Path, seq []testAction) {
 			var i int
 			defer func() {
@@ -305,7 +308,7 @@ func TestGuard(t *testing.T) {
 			for i = range seq {
 				seq[i].fn(p)
 			}
-		}(new(Path), seq)
+		}(path, seq)
 	}
 	wg.Wait()
 

@@ -7,46 +7,6 @@ var (
 	ErrConflict = errors.Simple("deadlock conflict")
 )
 
-type Thread struct {
-	// Can be used to decide how to settle conflicts between Threads.
-	// Note that during a conflict, it is guaranteed that the conflicting Thread has exclusive access to this member.
-	// Since other Threads can only enter a conflict with a Thread that is attempting to Lock a Gate, it is also guaranteed that a Thread has exclusive access to its own Data member.
-	Data any
-
-	mux     S          // protect own state
-	waiting *Gate      // Gate currently blocked on, if any
-	cancel  chan error // used to cancel waiting
-}
-
-func ThreadMake(data any) *Thread {
-	return &Thread{
-		Data:   data,
-		cancel: make(chan error),
-	}
-}
-
-// Cancels resolves the Thread's current conflict by canceling its Gate locking attempt.
-// The reason may be nil, in which case a generic one will be supplied to the blocked side.
-func (x *Thread) Cancel(reason error) {
-	x.waiting = nil
-	x.cancel <- reason
-	x.unlock()
-}
-
-// Resolve resolves the Thread's current conflict by allowing it to continue waiting.
-// The caller should then abort what it's doing and unwind, unblocking the Key.
-func (x *Thread) Resolve() {
-	x.unlock()
-}
-
-func (x *Thread) lock() {
-	x.mux.Lock()
-}
-
-func (x *Thread) unlock() {
-	x.mux.Unlock()
-}
-
 type Gate struct {
 	thread *Thread
 	count  int
@@ -54,8 +14,8 @@ type Gate struct {
 	mux    S
 }
 
-func GateMake() *Gate {
-	return &Gate{
+func GateMake() Gate {
+	return Gate{
 		wait: make(chan struct{}),
 	}
 }
@@ -161,13 +121,53 @@ func (x *Gate) threadGet() *Thread {
 	return o
 }
 
+type Thread struct {
+	// Can be used to decide how to settle conflicts between Threads.
+	// Note that during a conflict, it is guaranteed that the conflicting Thread has exclusive access to this member.
+	// Since other Threads can only enter a conflict with a Thread that is attempting to Lock a Gate, it is also guaranteed that a Thread has exclusive access to its own Data member.
+	Data any
+
+	mux     S          // protect own state
+	waiting *Gate      // Gate currently blocked on, if any
+	cancel  chan error // used to cancel waiting
+}
+
+func ThreadMake(data any) Thread {
+	return Thread{
+		Data:   data,
+		cancel: make(chan error),
+	}
+}
+
+// Cancels resolves the Thread's current conflict by canceling its Gate locking attempt.
+// The reason may be nil, in which case a generic one will be supplied to the blocked side.
+func (x *Thread) Cancel(reason error) {
+	x.waiting = nil
+	x.cancel <- reason
+	x.unlock()
+}
+
+// Resolve resolves the Thread's current conflict by allowing it to continue waiting.
+// The caller should then abort what it's doing and unwind, unblocking the Key.
+func (x *Thread) Resolve() {
+	x.unlock()
+}
+
+func (x *Thread) lock() {
+	x.mux.Lock()
+}
+
+func (x *Thread) unlock() {
+	x.mux.Unlock()
+}
+
 // TODO delete or turn into a comment
 func example() error {
 	g := GateMake()
 	t := ThreadMake(nil)
 
 try:
-	conflict, err := g.Lock(t)
+	conflict, err := g.Lock(&t)
 	if err != nil {
 		if err == ErrConflict {
 			var decision bool
